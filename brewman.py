@@ -80,13 +80,15 @@ def device_check():
             def sensor():
                 if device_name.upper() in 'SENSOR 1':
                     relay_pin = relay_pin_1
-                    return relay_pin
                     print("Using Relay 1")
+                    return relay_pin
+
 
                 elif device_name.upper() in 'SENSOR 2':
                     relay_pin = relay_pin_2
-                    return relay_pin
                     print("Using Relay 2")
+                    return relay_pin
+
 
             relay_pin = sensor()
                 
