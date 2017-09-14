@@ -1,0 +1,17 @@
+{
+    "settinggroup1":
+        {
+            "id1": "value",
+            "id2": "value"
+        },
+    "settinggroup2":
+        {
+            "id1": "value",
+            "id2": "value"
+        },
+    "settinggroup3":
+        {
+            "id1": "value",
+            "id2": "value"
+        }
+}

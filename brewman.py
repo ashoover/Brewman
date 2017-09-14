@@ -3,19 +3,18 @@ import os
 import time
 import logging
 import RPi.GPIO as GPIO
-
-# Variables
-base_dir = '/sys/bus/w1/devices/'
+import shutil
+import json
 
 
 # Settings
 sleep_time = 5 #300
-diag_mode = True
+logging_state = True
 logging_level = 'logging.INFO'
 log_file_name = 'app_logs.txt'
 relay_pin_1 = 12
 relay_pin_2 = 13
-log_temperature = 'Y'
+log_temperature = True
 temp_format = 'F'
 logs_folder = 'logs/'
 th_high = 80
@@ -25,14 +24,49 @@ wu_th = 3
 device_list = {'28-0516a1a7d7ff':'Sensor 1',
      	       '28-0416b059cfff':'Sensor 2'}
 
+
+# Variables
+base_dir = '/sys/bus/w1/devices/'
+mon_temp_sensor_count = len(device_list)
+temp_sensor_count = len(device_list)
+config_file_name = 'config_file.json'
+example_config_file_name = 'config_file.json_example'
+
+
 # Setups
-logging.basicConfig(filename=log_file_name, level=logging_level, format="%(asctime)s %(levelname)s %(message)s")
-logging.info("Logging Enabled.")
+if logging_state:
+    import logging
+    logging.basicConfig(filename=log_file_name, level=logging_level, format="%(asctime)s %(levelname)s %(message)s")
+    logging.info("Logging Enabled.")
+else:
+    pass
+
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
 
-# Functions
 
+def config_file_check():
+    config_file_status = os.path.isfile(config_file_name)
+
+    if config_file_status:
+        logging.info('Config file found.')
+    else:
+        logging.info('No config file found.  Creating config file from example.')
+        shutil.copy(example_config_file_name, config_file_name)
+        if config_file_status:
+            logging.info('Config file creation SUCCESS.')
+        else:
+            logging.error('Error Creating log file. Check permissions.')
+            break
+
+# Config File Import
+with open(config_file_name, encoding="utf-8") as config_file:
+    config = json.loads(config_file.read())
+
+id_import_example = config["settinggroup1"]["id1"]
+
+
+# Functions
 def device_check():
     for device_id, device_name in device_list.items():
 
@@ -63,12 +97,11 @@ def device_check():
 
         def sensor():
             if device_name.upper() == 'SENSOR 1':
-                relay_pin = relay_pin_1
+                return relay_pin_1
 
             elif device_name.upper() == 'SENSOR 2':
-                relay_pin = relay_pin_2
+                return relay_pin_2
 
-            return relay_pin
         relay_pin = sensor()
 
         # Fan Controller
@@ -81,8 +114,6 @@ def device_check():
                 GPIO.setup(relay_pin_2, GPIO.OUT)
 
             print("Checking Device : {}".format(device_name))
-
-            if diag_mode:
 
             def fan_on():
                 gpio_setup()
@@ -146,7 +177,7 @@ def device_check():
 
         # Write to sensor ID titled logs in the 'logs' folder
         def write_to_log():
-            log_data = [device_name, device_id, ctemp_f, ctemp_c, current_time, actiontt]
+            log_data = [device_name, device_id, ctemp_f, ctemp_c, current_time, action_to_take]
 
             temp_data_exist = os.path.exists(temp_data_file)
 
@@ -163,18 +194,19 @@ def device_check():
         current_temp = read_temp()
         ctemp_f = int(current_temp[1])
         ctemp_c = int(current_temp[0])
-        actiontt = temp_action()
+        action_to_take = temp_action()
 
         if temp_format.upper() == 'F':
             print("Current temp on {} is : {}F at {}".format(device_name, ctemp_f, current_time))
         else:
             print("Current temp on {} is : {}C at {}".format(device_name, ctemp_c, current_time))
      
-        if log_temperature.upper() == 'Y':
+        if log_temperature:
             write_to_log()
 
 
 # App Call
 while True:
+    config_file_check()
     device_check()
     time.sleep(sleep_time)
