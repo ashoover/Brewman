@@ -9,8 +9,8 @@ import json
 
 # Settings
 sleep_time = 5 #300
-logging_state = True
 logging_level = 'logging.INFO'
+logging_state = True
 log_file_name = 'app_logs.txt'
 relay_pin_1 = 12
 relay_pin_2 = 13
@@ -24,6 +24,11 @@ wu_th = 3
 device_list = {'28-0516a1a7d7ff':'Sensor 1',
      	       '28-0416b059cfff':'Sensor 2'}
 
+# Setups
+logging.basicConfig(filename=log_file_name, level=logging_level, format="%(asctime)s %(levelname)s %(message)s")
+logging.info("Logging Enabled.")
+os.system('modprobe w1-gpio')
+os.system('modprobe w1-therm')
 
 # Variables
 base_dir = '/sys/bus/w1/devices/'
